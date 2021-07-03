@@ -201,3 +201,20 @@ class Dep {
     this.deps.forEach(dep => dep.update())
   }
 }
+
+/**
+ * 之前的逻辑 是 一个  对象 key 产生一个 dep 一个 dep 对应多个 watcher
+ */
+/**
+ * data{
+ *  people1: 'saber'
+ * }
+ */
+
+/**
+ *  vue2 的逻辑是   
+ *  data: {
+ *    people1: "saber",
+ *    people2: "kurama"
+ *  }
+ */
