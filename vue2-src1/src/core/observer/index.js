@@ -111,7 +111,9 @@ export function observe (value: any, asRootData: ?boolean): Observer | void {
   if (!isObject(value) || value instanceof VNode) {
     return
   }
+  // Observer 
   let ob: Observer | void
+  // 判断是不是已经是 响应式 数据了
   if (hasOwn(value, '__ob__') && value.__ob__ instanceof Observer) {
     ob = value.__ob__
   } else if (
@@ -121,8 +123,10 @@ export function observe (value: any, asRootData: ?boolean): Observer | void {
     Object.isExtensible(value) &&
     !value._isVue
   ) {
+    // 创建一个响应
     ob = new Observer(value)
   }
+  // 如果是 根的 话 
   if (asRootData && ob) {
     ob.vmCount++
   }

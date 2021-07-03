@@ -226,6 +226,7 @@ function genConfig (name) {
       file: opts.dest,
       format: opts.format,
       banner: opts.banner,
+      sourcemap: true,
       name: opts.moduleName || 'Vue'
     },
     onwarn: (msg, warn) => {

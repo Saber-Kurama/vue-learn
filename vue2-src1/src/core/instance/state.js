@@ -35,7 +35,7 @@ const sharedPropertyDefinition = {
   get: noop,
   set: noop
 }
-
+// this.name ---> this._data.name
 export function proxy (target: Object, sourceKey: string, key: string) {
   sharedPropertyDefinition.get = function proxyGetter () {
     return this[sourceKey][key]
@@ -110,6 +110,7 @@ function initProps (vm: Component, propsOptions: Object) {
   toggleObserving(true)
 }
 
+// 初始化 data
 function initData (vm: Component) {
   let data = vm.$options.data
   data = vm._data = typeof data === 'function'
