@@ -35,14 +35,14 @@ const hooks = ['create', 'activate', 'update', 'remove', 'destroy']
 function sameVnode (a, b) {
   return (
     a.key === b.key &&
-    a.asyncFactory === b.asyncFactory && (
+    a.asyncFactory === b.asyncFactory && ( // 异步工厂方法 
       (
         a.tag === b.tag && // tag 一致
         a.isComment === b.isComment && // 都是注释
         isDef(a.data) === isDef(b.data) && // 都定义了data
         sameInputType(a, b) // input 的type 是一致
       ) || (
-        isTrue(a.isAsyncPlaceholder) &&
+        isTrue(a.isAsyncPlaceholder) && // 是否为异步占位
         isUndef(b.asyncFactory.error)
       )
     )
