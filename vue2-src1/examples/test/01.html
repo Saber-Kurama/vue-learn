@@ -22,6 +22,7 @@
             // render(h){return h('div','render')},
             data:{foo:'foo'}
         })
+        setTimeout(() => {app.foo = 'saber'}, 3000)
         console.log(app.$options.render);
         
     </script>

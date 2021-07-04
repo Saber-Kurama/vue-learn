@@ -180,6 +180,8 @@ export default class Watcher {
   run () {
     if (this.active) {
       const value = this.get()
+      // 下面 主要是 user watcher 
+      // 通过 $watch 或者  {watch} 添加
       if (
         value !== this.value ||
         // Deep watchers and watchers on Object/Arrays should fire even
