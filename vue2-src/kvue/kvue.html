@@ -8,12 +8,12 @@
     },
     render(h) {
       // 描述视图
-      const h1 = document.createElement('h1')
-      h1.textContent = this.counter 
-      return h1
+      // const h1 = document.createElement('h1')
+      // h1.textContent = this.counter 
+      // return h1
 
-      // // vnode
-      // // return h('h1', null, this.counter + '')
+      // vnode
+      return h('h1', null, this.counter + '')
       // return h('h1', {id:'xxx'}, [
       //   h('p', null, this.counter + ''),
       //   h('p', null, this.counter + ''),
