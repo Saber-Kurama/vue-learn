@@ -724,7 +724,8 @@ export function createPatchFunction (backend) {
       return node.nodeType === (vnode.isComment ? 8 : 3)
     }
   }
-
+  
+  // patch 旧的 vnode 和 新的
   return function patch (oldVnode, vnode, hydrating, removeOnly) {
     // 如果新的 vnode 没有 但是 oldVnode  存在  就是删除 操作
     if (isUndef(vnode)) {
