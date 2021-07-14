@@ -81,15 +81,15 @@ let product = reactive({ price: 5, quantity: 2 })
 let salePrice = ref(0)
 let total = 0
 
-
-
+// 这个不能放到下面  因为 total = salePrice.value * product.quantity 已经添加了 响应， 在赋值的时候，trigger 会执行 ref 中  track ，又执行了 trigger
+effect(() => {
+  salePrice.value = product.price * 0.9
+})
 effect(() => {
   total = salePrice.value * product.quantity
 })
 
-effect(() => {
-  salePrice.value = product.price * 0.9
-})
+
 
 console.log(
   `Before updated quantity total (should be 9) = ${total} salePrice (should be 4.5) = ${salePrice.value}`

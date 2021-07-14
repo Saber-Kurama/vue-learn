@@ -105,6 +105,11 @@ const ref = (initValue) => {
         // trigger(r, "value");
     },
     get value() {
+
+      // 不执行 当前 活跃的 effect
+      // if (effect !== activeEffect || effect.allowRecurse) {
+      //   effects.add(effect)
+      // }
       if(activeEffect && preValue !== raw){
         console.log('tracktracktrack')
         track(r, "value");

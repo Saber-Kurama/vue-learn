@@ -105,7 +105,7 @@ function createGetter(isReadonly = false, shallow = false) {
     if (!isReadonly && targetIsArray && hasOwn(arrayInstrumentations, key)) {
       return Reflect.get(arrayInstrumentations, key, receiver)
     }
-
+    // 非数组 是对象的话
     const res = Reflect.get(target, key, receiver)
 
     if (isSymbol(key) ? builtInSymbols.has(key) : isNonTrackableKeys(key)) {
