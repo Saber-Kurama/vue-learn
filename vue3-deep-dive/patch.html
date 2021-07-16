@@ -1,0 +1,122 @@
+<div id="app"></div>
+<style>
+  .red{
+    color: red;
+  }
+  .green{
+    color: green;
+  }
+</style>
+<script>
+  console.log('???')
+  const h = (tag, props, children) => {
+    return {
+      tag,
+      props,
+      children
+    }
+  }
+  const mount = (vdom, container) => {
+    // 通过虚拟 dom 生成 真实 dom
+    const el = vdom.el = document.createElement(vdom.tag);
+    // 属性处理
+    // 简单的都是 dom的原生属性
+    for( let key in vdom.props){
+       const value = vdom.props[key]
+       el.setAttribute(key, value)
+    }
+    // 如果节点是字符串
+    if(typeof vdom.children === 'string'){
+      el.textContent = vdom.children
+    }else{
+      // 如果是数组的话
+      vdom.children.forEach(child => {
+        mount(child, el)
+      });
+    }
+    container.appendChild(el)
+    // container.appendChild( document.createElement('div'))
+  }
+  const v1 = h('div', {}, [
+  
+    h('div', {class: 'red'}, 'saber')
+  ])
+
+  const v2 = h('div', {}, [
+    h('div', {class: 'green'}, 'kurama'),
+    h('div', {class: 'green'}, 'saber'),
+  ]) 
+  // 两个虚拟 dom 进行 diff 更新
+  const patch = (n1, n2) => {
+    const el = n2.el = n1.el;
+    // tag 相等的时候
+    if(n1.tag === n2.tag){
+      // 属性的处理
+      const oldProps = n1.props || {};
+      const newProps = n2.props || {};
+      // 处理 newProps
+      for( key in newProps) {
+        const oldValue = oldProps[key]
+        const newValue = newProps[key]
+        if(oldValue !== newValue){
+          el.setAttribute(key, newValue)
+        }
+      }
+      // 如果 oldProps 中有剩余的话
+      for(key in oldProps) {
+        if(!newProps[key]){
+          el.removeAttribute(key)
+        }
+      }
+      // 节点的处理
+      const oldChildren = n1.children;
+      const newChildren = n2.children;
+      
+      if(typeof newChildren === 'string'){
+        // 新的节点是 string
+        if(typeof oldChildren === 'string'){
+          el.textContent = newChildren
+        }else{
+          el.textContent = newChildren
+        }
+      }else{ // 新的数组
+        if(typeof oldChildren === 'string'){
+          el.innerHTML = '';
+          newChildren.forEach((child) => {
+            mount(child, el)
+          })
+          
+        }else{
+          // 新旧都是数组
+          // 1. 关心 key
+          // 这个为了简单 暂时不关心 key
+          const minLength = Math.min(oldChildren.length, newChildren.length)
+          for(let i = 0 ; i < minLength; i++){
+            patch(oldChildren[i], newChildren[i])
+          }
+          // 看看谁有剩余
+          if(oldChildren.length > minLength){
+            let restChildren = oldChildren.slice(minLength)
+            restChildren.forEach(child => {
+              el.removeChild(child.el)
+            })
+          }
+          // 如果新的有剩余
+          if(newChildren.length > minLength){
+            let restChildren = newChildren.slice(minLength)
+            restChildren.forEach(child => {
+              mount(child, el)
+            })
+          }
+        }
+      }
+    }else {
+      // 不相等的时候  replace
+    }
+  }
+  mount(v1, document.querySelector('#app'))
+  setTimeout(() => {
+    console.log('???,,,')
+    patch(v1, v2)
+  }, 3000);
+</script>
