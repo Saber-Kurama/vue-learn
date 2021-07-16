@@ -1,0 +1,42 @@
+<div id="app"></div>
+<style>
+  .red{
+    color: red;
+  }
+</style>
+<script>
+  console.log('???')
+  const h = (tag, props, children) => {
+    return {
+      tag,
+      props,
+      children
+    }
+  }
+  const mount = (vdom, container) => {
+    // 通过虚拟 dom 生成 真实 dom
+    const el = document.createElement(vdom.tag);
+    // 属性处理
+    // 简单的都是 dom的原生属性
+    for( let key in vdom.props){
+       const value = vdom.props[key]
+       el.setAttribute(key, value)
+    }
+    // 如果节点是字符串
+    if(typeof vdom.children === 'string'){
+      el.textContent = vdom.children
+    }else{
+      // 如果是数组的话
+      vdom.children.forEach(child => {
+        mount(child, el)
+      });
+    }
+    container.appendChild(el)
+    // container.appendChild( document.createElement('div'))
+  }
+  const v1 = h('div', {}, [
+    // "name",
+    h('div', {class: 'red'}, 'saber')
+  ])
+  mount(v1, document.querySelector('#app'))
+</script>
