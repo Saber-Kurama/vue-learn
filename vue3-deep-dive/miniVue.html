@@ -1,0 +1,226 @@
+<div id="app"></div>
+<style>
+  .red{
+    color: red;
+  }
+  .green{
+    color: green;
+  }
+</style>
+<script>
+  /**
+   *  dom diff
+   */
+  const h = (tag, props, children) => {
+    return {
+      tag,
+      props,
+      children
+    }
+  }
+  const mount = (vdom, container) => {
+    // 通过虚拟 dom 生成 真实 dom
+    const el = vdom.el = document.createElement(vdom.tag);
+    // 属性处理
+    // 简单的都是 dom的原生属性
+    for( let key in vdom.props){
+       const value = vdom.props[key]
+       el.setAttribute(key, value)
+    }
+    // 如果节点是字符串
+    if(typeof vdom.children === 'string'){
+      el.textContent = vdom.children
+    }else{
+      // 如果是数组的话
+      vdom.children.forEach(child => {
+        mount(child, el)
+      });
+    }
+    container.appendChild(el)
+    // container.appendChild( document.createElement('div'))
+  }
+  // 两个虚拟 dom 进行 diff 更新
+  const patch = (n1, n2) => {
+    const el = n2.el = n1.el;
+    // tag 相等的时候
+    if(n1.tag === n2.tag){
+      // 属性的处理
+      const oldProps = n1.props || {};
+      const newProps = n2.props || {};
+      // 处理 newProps
+      for( key in newProps) {
+        const oldValue = oldProps[key]
+        const newValue = newProps[key]
+        if(oldValue !== newValue){
+          el.setAttribute(key, newValue)
+        }
+      }
+      // 如果 oldProps 中有剩余的话
+      for(key in oldProps) {
+        if(!newProps[key]){
+          el.removeAttribute(key)
+        }
+      }
+      // 节点的处理
+      const oldChildren = n1.children;
+      const newChildren = n2.children;
+      
+      if(typeof newChildren === 'string'){
+        // 新的节点是 string
+        if(typeof oldChildren === 'string'){
+          el.textContent = newChildren
+        }else{
+          el.textContent = newChildren
+        }
+      }else{ // 新的数组
+        if(typeof oldChildren === 'string'){
+          el.innerHTML = '';
+          newChildren.forEach((child) => {
+            mount(child, el)
+          })
+          
+        }else{
+          // 新旧都是数组
+          // 1. 关心 key
+          // 这个为了简单 暂时不关心 key
+          const minLength = Math.min(oldChildren.length, newChildren.length)
+          for(let i = 0 ; i < minLength; i++){
+            patch(oldChildren[i], newChildren[i])
+          }
+          // 看看谁有剩余
+          if(oldChildren.length > minLength){
+            let restChildren = oldChildren.slice(minLength)
+            restChildren.forEach(child => {
+              el.removeChild(child.el)
+            })
+          }
+          // 如果新的有剩余
+          if(newChildren.length > minLength){
+            let restChildren = newChildren.slice(minLength)
+            restChildren.forEach(child => {
+              mount(child, el)
+            })
+          }
+        }
+      }
+    }else {
+      // 不相等的时候  replace
+    }
+  }
+  
+  /**
+   * reactive 
+   */ 
+   let activeEffect = null
+/**
+ *  代理 的很多方法 可以做到 对应的处理方式
+ *  可以解决数组的问题
+ */
+/**
+ *  为什么 使用 WeakMap 
+ *  1. WeakMap 的key 是对象
+ *  2. WeakMap 中key的对象被垃圾回收之后， WeakMap 中的存储也会被回收 所以 WeakMap 不能迭代 
+ */
+const targetMap = new WeakMap()
+class Dep {
+  subscribers = new Set();
+  depend() {
+    if(activeEffect){
+      this.subscribers.add(activeEffect)
+    } 
+  }
+  notify(){
+    this.subscribers.forEach((effect) => {
+      effect()
+    })
+  }
+}
+
+function watchEffect(effetct) {
+    activeEffect = effetct
+    effetct();
+    activeEffect = null
+}
+
+// 怎么找到 对应的 dep 呢 
+// 有 target 和 key
+// 定义一个全局对象
+function getDep (target, key) {
+    let depsMap = targetMap.get(target)
+    if(!depsMap){
+     targetMap.set(target, depsMap = new Map()) 
+    }
+    let dep = depsMap.get(key)
+    if(!dep){
+        depsMap.set( key, dep = new Dep())
+    }
+    return dep
+}
+const proxyHandler = {
+    get(target, key, receiver) {
+        const dep = getDep(target, key) 
+        dep.depend()
+        return Reflect.get(target, key, receiver)
+    },
+    set(target, key, value, receiver) {
+        Reflect.set(target, key, value, receiver)
+        const dep = getDep(target, key) 
+        console.log(dep)
+        return dep.notify()
+    },
+    // 除了 get 和 set 之外 我们还有其他的方法 来接受监听 并做响应式
+    // owerKeys
+
+}
+
+function reactive(raw) {
+    // vue 2 的方案 
+    // Object.keys(raw).forEach(key => {
+    //     // 针对每一个 key 
+        // let dep = new Dep();
+    //     let value = raw[key]; 
+    //     Object.defineProperty(raw, key, {
+    //         get(){
+    //             dep.depend()
+    //             return value
+    //         },
+    //         set(newVal){
+    //             value = newVal
+    //             return dep.notify()
+    //         }
+    //     })
+    // })
+    return new Proxy(raw, proxyHandler)
+}
+
+const App = {
+    data: reactive({
+        name: 'saber'
+    }),
+    render() {
+        return h('div', {}, this.data.name)
+    }
+}
+function mountApp(component, container){
+    let isMountEnd = false
+    let preVdom = null
+    watchEffect(() => {
+        if(!isMountEnd){
+            const vdom = component.render()
+            mount(vdom, container)
+            isMountEnd = true
+            preVdom = vdom
+        }else{
+            const newVdom = component.render()
+            patch(preVdom, newVdom)
+            preVdom = newVdom
+        }
+    })
+}
+mountApp(App, document.querySelector('#app'))
+
+setTimeout(() => {
+    App.data.name = 'kurama'
+}, 2000)
+ 
+</script>
