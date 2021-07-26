@@ -2,7 +2,7 @@
   "compilerOptions": {
     "baseUrl": ".",
     "outDir": "dist",
-    "sourceMap": false,
+    "sourceMap": true,
     "target": "es2016",
     "useDefineForClassFields": false,
     "module": "esnext",
@@ -17,7 +17,7 @@
     "jsx": "preserve",
     "lib": ["esnext", "dom"],
     "types": ["jest", "puppeteer", "node"],
-    "rootDir": ".",
+    "rootDir": "../../../packages",
     "paths": {
       "@vue/compat": ["packages/vue-compat/src"],
       "@vue/*": ["packages/*/src"],
@@ -25,10 +25,9 @@
     },
   },
   "include": [
-    "packages/global.d.ts",
-    "packages/*/src",
-    "packages/runtime-dom/types/jsx.d.ts",
-    "packages/*/__tests__",
-    "test-dts"
+    "../../../packages/global.d.ts",
+    "../../../packages/*/src",
+    "../../../packages/runtime-dom/types/jsx.d.ts",
+    "test-dts",
   ]
 }
