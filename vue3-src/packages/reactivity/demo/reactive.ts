@@ -1,3 +1,4 @@
+// @ts-ignore
 import { sabername } from "./a";
 
 console.log("???");
