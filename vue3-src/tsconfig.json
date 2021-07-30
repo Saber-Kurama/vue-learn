@@ -2,17 +2,17 @@
   "compilerOptions": {
     "baseUrl": ".",
     "outDir": "dist",
-    "sourceMap": true, // false
+    "sourceMap": true,
     "target": "es2016",
     "useDefineForClassFields": false,
-    "module": "CommonJS", // esnext
+    "module": "esnext",
     "moduleResolution": "node",
     "allowJs": false,
-    // "strict": true,
-    // "noUnusedLocals": true,
-    // "experimentalDecorators": true,
-    // "resolveJsonModule": true,
-    // "esModuleInterop": true,
+    "strict": true,
+    "noUnusedLocals": true,
+    "experimentalDecorators": true,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
     "removeComments": false,
     "jsx": "preserve",
     "lib": ["esnext", "dom"],
@@ -23,15 +23,12 @@
       "@vue/*": ["packages/*/src"],
       "vue": ["packages/vue/src"]
     },
-    "typeRoots" : ["./node_modules/@types", "./typings"]
   },
   "include": [
-    "demo/*",
-    "typings/global.d.ts"
-    // "packages/global.d.ts",
-    // "packages/*/src",
-    // "packages/runtime-dom/types/jsx.d.ts",
-    // "packages/*/__tests__",
-    // "test-dts"
+    "packages/global.d.ts",
+    "packages/*/src",
+    "packages/runtime-dom/types/jsx.d.ts",
+    "packages/*/__tests__",
+    "test-dts"
   ]
 }

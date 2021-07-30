@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset='utf-8'>
+  <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+  <title>Page Title</title>
+  <meta name='viewport' content='width=device-width, initial-scale=1'>
+  <script src="../dist/reactivity.global.js"></script> 
+</head>
+<body>
+  
+</body>
+<script>
+  const { reactive, readonly } = VueReactivity
+  // reactive  readonly
+  // let obj = { name: 'saber'}
+  // let roObj = readonly(obj)
+  // // let proxy = reactive(obj)
+  // // console.log('roObj.name', roObj.name)
+  // // reactive(roObj)
+
+  // reactive  
+  // let obj = { name: 'saber'}
+  // let proxy1 = reactive(obj)
+  // debugger
+  // let proxy2 = reactive(proxy1)
+
+  const obj = {}
+  const reactiveObj = reactive(obj)
+  const prototype = reactiveObj['__proto__']
+  const otherObj = { data: ['a'] }
+  const reactiveOther = reactive(otherObj)
+</script>
+</html>
