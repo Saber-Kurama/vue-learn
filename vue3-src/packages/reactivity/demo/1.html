@@ -11,7 +11,7 @@
   
 </body>
 <script>
-  const { reactive, readonly } = VueReactivity
+  const { reactive, readonly, isReactive, ref } = VueReactivity
   // reactive  readonly
   // let obj = { name: 'saber'}
   // let roObj = readonly(obj)
@@ -25,10 +25,37 @@
   // debugger
   // let proxy2 = reactive(proxy1)
 
-  const obj = {}
-  const reactiveObj = reactive(obj)
-  const prototype = reactiveObj['__proto__']
-  const otherObj = { data: ['a'] }
-  const reactiveOther = reactive(otherObj)
+  // const obj = {}
+  // const reactiveObj = reactive(obj)
+  // const prototype = reactiveObj['__proto__']
+  // const otherObj = { data: ['a'] }
+  // const reactiveOther = reactive(otherObj)
+// debugger
+// const obj = reactive({name: 'saber'})
+// console.log(isReactive(obj))
+
+  // const obj = reactive({
+  //     foo: Object.preventExtensions({ a: 1 }),
+  //     // sealed or frozen objects are considered non-extensible as well
+  //     bar: Object.freeze({ a: 1 }),
+  //     baz: Object.seal({ a: 1 })
+  //   })
+  //   console.log(obj)
+  //   console.log(isReactive(obj.foo))
+    // console.log(obj.foo)
+
+    // debugger;
+    // const observedNumberRef = reactive(ref(1))
+    // console.log('observedNumberRef', observedNumberRef)
+    const nums = [1, 2, 3 ]
+    debugger;
+    const numsProxy = reactive(nums)
+    debugger
+    numsProxy.push(1)
+    debugger
+    console.log(numsProxy)
+    debugger
+    console.log(numsProxy[0])
+    debugger;
 </script>
 </html>
