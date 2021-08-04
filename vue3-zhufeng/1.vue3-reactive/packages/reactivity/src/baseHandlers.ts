@@ -1,4 +1,6 @@
 import { extend, hasChanged, hasOwn, isArray, isIntegerKey, isObject } from "@vue/shared"
+import { track, trigger } from "./effect";
+import { TrackOpTypes, TriggerOrTypes } from "./operators";
 import { reactive, readonly } from "./reactive"
 
 // get 逻辑
@@ -42,6 +44,7 @@ function createGetter( isReadonly = false, shallow = false) {
     const res = Reflect.get(target, key, receiver);
     if(!isReadonly){
         // 执行 收集依赖
+        track(target,TrackOpTypes.GET,key)
     }
     // 浅拷贝
     if(shallow) {
@@ -66,10 +69,10 @@ function createSetter(shallow = false) {
 
     if(!hadKey){
         // 新增 
-        // trigger(target,TriggerOrTypes.ADD,key,value);
+        trigger(target,TriggerOrTypes.ADD,key,value);
     }else if(hasChanged(oldValue,value)){
         // 修改 
-        // trigger(target,TriggerOrTypes.SET,key,value,oldValue)
+        trigger(target,TriggerOrTypes.SET,key,value,oldValue)
     }
 
 
