@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+
+  <body>
+    <script src="../node_modules/@vue/reactivity/dist/reactivity.global.js"></script>
+    <div id="app"></div>
+    <script>
+      let { effect, reactive, ref, shallowRef, toRef, toRefs, computed } =
+        VueReactivity;
+      // 缓存  computed  effect(lazy) + scheduler + 缓存的标识
+
+      const age = ref(18);
+      const myAge = computed(() => {
+        // 此方法默认不会被执行
+        console.log("执行---");
+        return age.value + 10;
+      });
+      console.log(myAge.value);
+      // const myAge = computed({
+      //     get(){},
+      //     set(){}
+      // })
+
+      // 当访问属性的时候执行
+      // console.log(myAge.value)
+      //console.log(myAge.value)// 缓存
+
+      age.value = 100; // 更新age，myAge不会立刻重新计算
+      console.log(myAge.value); // 再次计算最新值
+    //   console.log(myAge.value); // 使用缓存值
+
+    //   effect(() => { // 此effect中没有age
+    //     //   console.log('???xxx')
+    //       console.log('???xxx', myAge.value)
+    //   })
+    //   age.value = 500
+    //   console.log(myAge.value)
+
+      // const value = reactive({})
+      // const cValue = computed(() => value.foo)
+      // console.log('cValue.value', cValue.value);
+      // value.foo = 1
+      // console.log('cValue.value', cValue.value);
+
+      // const value = reactive({})
+      // const cValue = computed(() => value.foo)
+      // let dummy
+      // effect(() => {
+      //     console.log('<>><')
+      //     dummy = cValue.value
+      // })
+      // console.log('dummy', dummy)
+      // value.foo = 1
+      // console.log('dummy', dummy)
+      // value.foo = 3
+      // console.log('dummy', dummy)
+
+      // const value = reactive({ foo: 0 })
+      // const c1 = computed(() => value.foo)
+      // const c2 = computed(() => c1.value + 1)
+      // console.log(c2.value)
+      // console.log(c1.value)
+      // value.foo++
+      // c1.value = 2
+      // console.log(c2.value)
+      // console.log(c1.value)
+
+    //   const n = ref(1);
+    //   const plusOne = computed({
+    //     get: () => n.value + 1,
+    //     set: (val) => {
+    //       n.value = val - 1;
+    //     },
+    //   });
+
+    //   let dummy;
+    //   effect(() => {
+    //     dummy = n.value;
+    //   });
+    //   // expect(dummy).toBe(1)
+    //   console.log("dummy", dummy);
+
+    //   plusOne.value = 0;
+    //   // expect(dummy).toBe(-1)
+    //   console.log("dummy", dummy);
+    </script>
+  </body>
+</html>

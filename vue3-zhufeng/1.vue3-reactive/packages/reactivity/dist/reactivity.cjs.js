@@ -5,17 +5,17 @@ Object.defineProperty(exports, '__esModule', { value: true });
 const isObject = (value) => typeof value == 'object' && value !== null;
 const extend = Object.assign;
 const isArray = Array.isArray;
+const isFunction = (value) => typeof value == 'function';
 const isIntegerKey = (key) => parseInt(key) + '' === key;
 let hasOwnpRroperty = Object.prototype.hasOwnProperty;
 const hasOwn = (target, key) => hasOwnpRroperty.call(target, key);
 const hasChanged = (oldValue, value) => oldValue !== value;
 
 function effect(fn, options = {}) {
-    // 变成响应式effect
+    // 我需要让这个effect变成响应的effect，可以做到数据变化重新执行 
     const effect = createReactiveEffect(fn, options);
-    if (!options.lazy) {
-        // 不是 延迟 就直接执行
-        effect();
+    if (!options.lazy) { // 默认的effect会先执行
+        effect(); // 响应式的effect默认会先执行一次
     }
     return effect;
 }
@@ -24,8 +24,7 @@ let activeEffect; // 存储当前的effect
 const effectStack = [];
 function createReactiveEffect(fn, options) {
     const effect = function reactiveEffect() {
-        if (!effectStack.includes(effect)) {
-            // 保证effect没有加入到effectStack中
+        if (!effectStack.includes(effect)) { // 保证effect没有加入到effectStack中
             try {
                 effectStack.push(effect);
                 activeEffect = effect;
@@ -37,12 +36,13 @@ function createReactiveEffect(fn, options) {
             }
         }
     };
-    effect.id = uid++;
-    effect._isEffect = true;
-    effect.raw = fn; // 保留原生方法
-    effect.options = options;
+    effect.id = uid++; // 制作一个effect标识 用于区分effect
+    effect._isEffect = true; // 用于标识这个是响应式effect
+    effect.raw = fn; // 保留effect对应的原函数
+    effect.options = options; // 在effect上保存用户的属性
     return effect;
 }
+// 让，某个对象中的属性 收集当前他对应的effect函数
 const targetMap = new WeakMap();
 function track(target, type, key) {
     //  activeEffect; // 当前正在运行的effect
@@ -96,22 +96,24 @@ function trigger(target, type, key, newValue, oldValue) {
                 }
         }
     }
-    effects.forEach((effect) => effect());
+    effects.forEach((effect) => {
+        if (effect.options.scheduler) {
+            effect.options.scheduler(effect);
+        }
+        else {
+            effect();
+        }
+    });
 }
-/**
- *  一些案例
- */
-// 解决这样的问题 我们需要一个栈
-// effect(() => {
-//   state.name = 'saber'
-//   effect( () => {
-//     state.age = 10
-//   })
-//   effect.address = 'xx'
-// })
-//  防止重复添加 需要判断栈中是否已经存在
-// effect(() => {
-//   state.num++
+// weakMap {name:'zf',age:12}  (map) =>{name => set(effect),age => set(effect)}
+// {name:'zf',age:12} => name => [effect effect]
+// 函数调用是一个栈型结构
+// effect(()=>{ // effect1   [effect1]
+//     state.name -> effect1
+//     effect(()=>{ // effect2
+//         state.age -> effect2
+//     })
+//     state.address -> effect1
 // })
 
 // get 逻辑
@@ -273,6 +275,59 @@ function toRefs(object) {
     return ret;
 }
 
+class ComputedRefImpl {
+    setter;
+    _dirty = true;
+    _value;
+    effect;
+    constructor(getter, setter) {
+        this.setter = setter;
+        this.effect = effect(getter, {
+            lazy: true,
+            scheduler: () => {
+                // 走到这一步的话 证明 值反生修改
+                if (!this._dirty) {
+                    console.log('>>>');
+                    this._dirty = true;
+                    trigger(this, 1 /* SET */, 'value');
+                }
+            }
+        });
+    }
+    get value() {
+        // 执行 effect
+        trigger(this, 1 /* SET */, 'value');
+        if (this._dirty) {
+            this._value = this.effect();
+            this._dirty = false;
+        }
+        track(this, 0 /* GET */, 'value');
+        return this._value;
+    }
+    set value(newValue) {
+        this.setter(newValue);
+    }
+}
+/**
+ *  接受 getter setter 或者一个 function
+ */
+function computed(getterOrOptions) {
+    let getter;
+    let setter;
+    if (isFunction(getterOrOptions)) {
+        getter = getterOrOptions;
+        setter = () => {
+            console.warn("computed value must be readonly");
+        };
+    }
+    else {
+        getter = getterOrOptions.get;
+        setter = getterOrOptions.set;
+    }
+    return new ComputedRefImpl(getter, setter);
+}
+
+exports.computed = computed;
 exports.effect = effect;
 exports.reactive = reactive;
 exports.readonly = readonly;
