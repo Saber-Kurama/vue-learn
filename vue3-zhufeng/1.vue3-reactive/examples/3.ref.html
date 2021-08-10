@@ -12,15 +12,19 @@
     <script src="../node_modules/@vue/reactivity/dist/reactivity.global.js"></script>
     <div id="app"></div>
     <script>
-        let { effect, reactive ,ref ,shallowRef,toRef } = VueReactivity;
+        let { effect, reactive ,ref, toRef, toRefs } = VueReactivity;
         let name = ref('zf'); // 将普通的类型 转化成一个对象，这个对象中有value属性 指向原来的值
-
+        // let toRef = toRef({name:})
+        let obj = reactive({name: 'saber'})
+        const objRef = toRefs(obj)
         effect(() => { // 默认会执行  -》 会依赖收集 收集effect
-            app.innerHTML = name.value // track
+            // app.innerHTML = name // track
+            app.innerHTML = obj.name // track
         })
         
         setTimeout(() => {
-           name.value = 'jw'  // trigger
+        //    name.value = 'jw'  // trigger
+        objRef.name.value = 'kurama'
         }, 1000);
         
     </script>

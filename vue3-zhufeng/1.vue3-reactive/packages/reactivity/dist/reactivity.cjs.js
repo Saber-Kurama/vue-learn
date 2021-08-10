@@ -212,9 +212,74 @@ function createReactiveObject(target, isReadonly, baseHandlers) {
     return proxy;
 }
 
+function ref(value) {
+    // 将普通类型变相一个对象， 使用 对象的 get set 方法
+    return createRef(value);
+}
+function shallowRef(value) {
+    return createRef(value, true);
+}
+const convert = (val) => (isObject(val) ? reactive(val) : val);
+class RefImpl {
+    rawValue;
+    shallow;
+    _value;
+    __v_isRef = true; // 产生的实例会被添加 __v_isRef 表示是一个ref属性
+    constructor(rawValue, shallow) {
+        this.rawValue = rawValue;
+        this.shallow = shallow;
+        this._value = shallow ? rawValue : convert(rawValue);
+    }
+    get value() {
+        track(this, 0 /* GET */, "value");
+        return this._value;
+    }
+    set value(newValue) {
+        if (hasChanged(newValue, this.rawValue)) {
+            // 判断老值和新值是否有变化
+            this.rawValue = newValue; // 新值会作为老值
+            this._value = this.shallow ? newValue : convert(newValue);
+            trigger(this, 1 /* SET */, "value", newValue);
+        }
+    }
+}
+function createRef(rawValue, shallow = false) {
+    return new RefImpl(rawValue, shallow);
+}
+class ObjectRefImpl {
+    target;
+    key;
+    __v_isRef = true;
+    constructor(target, key) {
+        this.target = target;
+        this.key = key;
+    }
+    get value() {
+        return this.target[this.key]; // 如果原对象是响应式的就会依赖收集
+    }
+    set value(newValue) {
+        this.target[this.key] = newValue; // 如果原来对象是响应式的 那么就会触发更新
+    }
+}
+// 将响应式对象的某一个key对应的值 转化成ref 
+function toRef(target, key) {
+    return new ObjectRefImpl(target, key);
+}
+function toRefs(object) {
+    const ret = isArray(object) ? new Array(object.length) : {};
+    for (let key in object) {
+        ret[key] = toRef(object, key);
+    }
+    return ret;
+}
+
 exports.effect = effect;
 exports.reactive = reactive;
 exports.readonly = readonly;
+exports.ref = ref;
 exports.shallowReactive = shallowReactive;
 exports.shallowReadonly = shallowReadonly;
+exports.shallowRef = shallowRef;
+exports.toRef = toRef;
+exports.toRefs = toRefs;
 //# sourceMappingURL=reactivity.cjs.js.map
