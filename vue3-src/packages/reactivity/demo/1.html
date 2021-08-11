@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset='utf-8'>
+  <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+  <title>Page Title</title>
+  <meta name='viewport' content='width=device-width, initial-scale=1'>
+  <script src="../dist/reactivity.global.js"></script> 
+</head>
+<body>
+  
+</body>
+<script>
+  const { reactive, readonly, isReactive, ref } = VueReactivity
+  // reactive  readonly
+  // let obj = { name: 'saber'}
+  // let roObj = readonly(obj)
+  // // let proxy = reactive(obj)
+  // // console.log('roObj.name', roObj.name)
+  // // reactive(roObj)
+
+  // reactive  
+  // let obj = { name: 'saber'}
+  // let proxy1 = reactive(obj)
+  // debugger
+  // let proxy2 = reactive(proxy1)
+
+  // const obj = {}
+  // const reactiveObj = reactive(obj)
+  // const prototype = reactiveObj['__proto__']
+  // const otherObj = { data: ['a'] }
+  // const reactiveOther = reactive(otherObj)
+// debugger
+// const obj = reactive({name: 'saber'})
+// console.log(isReactive(obj))
+
+  // const obj = reactive({
+  //     foo: Object.preventExtensions({ a: 1 }),
+  //     // sealed or frozen objects are considered non-extensible as well
+  //     bar: Object.freeze({ a: 1 }),
+  //     baz: Object.seal({ a: 1 })
+  //   })
+  //   console.log(obj)
+  //   console.log(isReactive(obj.foo))
+    // console.log(obj.foo)
+
+    // debugger;
+    // const observedNumberRef = reactive(ref(1))
+    // console.log('observedNumberRef', observedNumberRef)
+    const nums = [1, 2, 3 ]
+    debugger;
+    const numsProxy = reactive(nums)
+    debugger
+    numsProxy.push(1)
+    debugger
+    console.log(numsProxy)
+    debugger
+    console.log(numsProxy[0])
+    debugger;
+</script>
+</html>

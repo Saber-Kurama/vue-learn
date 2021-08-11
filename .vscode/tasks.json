@@ -1,0 +1,29 @@
+{
+  // See https://go.microsoft.com/fwlink/?LinkId=733558
+  // for the documentation about the tasks.json format
+  "version": "2.0.0",
+  "tasks": [
+    {
+      //-p 指定目录；-w watch,检测文件改变自动编译
+      // "args": ["-p", "${workspaceFolder}/vue3-src/packages/reactivity/demo/*","-w"],
+      "type": "typescript",
+      // "tsconfig": "tsconfig.json",
+      "tsconfig": "vue3-src/packages/reactivity/demo/tsconfig.json",
+      "option": "watch",
+      // "option": "watch -p",
+      // "options": {
+      //  "" 
+      // },
+      "problemMatcher": ["$tsc-watch"],
+      "label": "tscsaber",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "isBackground": true,
+      "presentation": {
+        "reveal": "never"
+      }
+    }
+  ]
+}

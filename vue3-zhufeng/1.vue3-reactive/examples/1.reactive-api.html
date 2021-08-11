@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <script src="../node_modules/@vue/reactivity/dist/reactivity.global.js"></script>
+    <script>
+        let { reactive, shallowReactive, readonly, shallowReadonly } = VueReactivity
+        // let state1 = reactive({name: 'saber', age: { n: 12}})
+        // console.log(state1)
+        // console.log(state1.age)
+        let state2 = shallowReactive({name: 'saber', age: { n: 12}})
+        console.log(state2)
+        console.log(state2.age)
+    </script>
+</body>
+
+</html>

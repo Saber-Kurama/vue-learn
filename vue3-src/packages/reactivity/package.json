@@ -11,6 +11,9 @@
     "index.js",
     "dist"
   ],
+  "scripts": {
+    "tsc:reactive": "tsc demo/reactive.ts"
+  },
   "sideEffects": false,
   "repository": {
     "type": "git",

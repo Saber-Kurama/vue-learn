@@ -1,4 +1,5 @@
 {
+<<<<<<< HEAD
     // Use IntelliSense to learn about possible attributes.
     // Hover to view descriptions of existing attributes.
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
@@ -30,4 +31,26 @@
             "internalConsoleOptions": "openOnSessionStart" // 当启动调试时定位到调试控制台
         }
     ]
+=======
+  // 使用 IntelliSense 了解相关属性。 
+  // 悬停以查看现有属性的描述。
+  // 欲了解更多信息，请访问: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "启动程序",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "program": "${workspaceFolder}/vue3-src/packages/reactivity/demo/reactive.ts",
+      "preLaunchTask": "tscsaber",
+      "outFiles": [
+        "${workspaceFolder}/vue3-src/packages/reactivity/demo/*.js"
+      ],
+      "cwd": "${workspaceFolder}/${workspaceFolder}/vue3-src/"
+    }
+  ]
+>>>>>>> a8316d97c14150e4095f1cd6261a5a90225f4ed5
 }
