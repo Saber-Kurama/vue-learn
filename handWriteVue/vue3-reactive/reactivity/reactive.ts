@@ -1,12 +1,26 @@
 
+import {
+  mutableHandlers,
+  // readonlyHandlers,
+  // shallowReactiveHandlers,
+  // shallowReadonlyHandlers
+} from './baseHandlers'
+
 interface Ref {}
+
+export const enum ReactiveFlags {
+  SKIP = '__v_skip',
+  IS_REACTIVE = '__v_isReactive',
+  IS_READONLY = '__v_isReadonly',
+  RAW = '__v_raw'
+}
 export interface Target {
   // [ReactiveFlags.SKIP]?: boolean
   // [ReactiveFlags.IS_REACTIVE]?: boolean
   // [ReactiveFlags.IS_READONLY]?: boolean
   // [ReactiveFlags.RAW]?: any
 }
-
+// proxyMap  
 export const reactiveMap = new WeakMap<Target, any>()
 
 // only unwrap nested ref
@@ -21,13 +35,13 @@ export function reactive(target: Object) {
   return createReactiveObject(
     target,
     // false,
-    // mutableHandlers,
+    mutableHandlers,
     // mutableCollectionHandlers,
     reactiveMap
   )
 }
 
-function createReactiveObject(target: Target, proxyMap: WeakMap<Target, any>) {
+function createReactiveObject(target: Target,  baseHandlers: ProxyHandler<any>, proxyMap: WeakMap<Target, any>) {
   // 边界判断
   // if (!isObject(target)) {
   //   if (__DEV__) {
@@ -44,3 +58,5 @@ function createReactiveObject(target: Target, proxyMap: WeakMap<Target, any>) {
   return proxy
 }
 let ss = reactive({name: 5})
+console.log(ss.name)
+// console.log('ss', ss)
