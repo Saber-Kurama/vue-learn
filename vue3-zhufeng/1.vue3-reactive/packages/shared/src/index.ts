@@ -11,6 +11,5 @@ let hasOwnpRroperty = Object.prototype.hasOwnProperty;
 export const hasOwn = (target, key) => hasOwnpRroperty.call(target, key);
 
 export const hasChanged = (oldValue,value) => oldValue !== value
-const shared = {}
 
-export default shared;
+export * from './shapeFlag'
