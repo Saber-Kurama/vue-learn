@@ -1,3 +1,4 @@
+import { effect } from "@vue/reactivity";
 import { ShapeFlags } from "@vue/shared";
 import { createAppAPI } from "./apiCreateApp";
 import { createComponentInstance, setupComponent } from "./component";
@@ -18,7 +19,21 @@ export function createRenderer(rendererOptions) {
   // -------------------组件----------------------
   const setupRenderEfect = (instance, container) => {
     console.log('instance', instance)
-    instance.render()
+    effect(function componentEffect() {
+      if(!instance.isMounted){
+        // 初次渲染
+        let proxyToUse = instance.proxy;
+        let subTree = instance.subTree = instance.render.call(proxyToUse, proxyToUse);
+
+        // 用render函数的返回值 继续渲染
+        patch(null, subTree, container);
+      } else {
+        // diff算法  （核心 diff + 序列优化 watchApi 生命周期）  
+        // ts 一周
+        // 组件库
+        // 更新逻辑
+      }
+    })
   }  
   const mountComponent = (initialVNode, container) => {
     // 组件的渲染流程  最核心的就是调用 setup拿到返回值，获取render函数返回的结果来进行渲染 

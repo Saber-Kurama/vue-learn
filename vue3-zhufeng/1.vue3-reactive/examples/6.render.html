@@ -45,6 +45,7 @@
             },
             render() {
                 console.log('render---')
+                return h('div', {a: '1'}, 'hello')
             }
         }
         let app = createApp(App, { name: 'zf', age: 12 })

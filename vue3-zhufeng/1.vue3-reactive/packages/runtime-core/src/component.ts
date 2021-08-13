@@ -1,4 +1,5 @@
 import { isFunction, isObject, ShapeFlags } from "@vue/shared";
+import { PublicInstanceProxyHandlers } from "./componentPublicInstance";
 
 export function createComponentInstance(vnode) {
   // webcomponent 组件需要有“属性” “插槽”
@@ -36,7 +37,7 @@ export function setupComponent(instance) {
 }
 function setupStatefulComponent(instance) {
   // 1.代理 传递给render函数的参数
-  // instance.proxy = new Proxy(instance.ctx, PublicInstanceProxyHandlers as any)
+  instance.proxy = new Proxy(instance.ctx, PublicInstanceProxyHandlers as any)
   // 2.获取组件的类型 拿到组件的setup方法
   let Component = instance.type
   let { setup } = Component;

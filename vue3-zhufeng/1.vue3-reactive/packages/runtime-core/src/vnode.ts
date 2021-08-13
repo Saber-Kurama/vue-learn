@@ -1,5 +1,8 @@
 import { isArray, isObject, isString, ShapeFlags } from "@vue/shared"
 
+export function isVnode(vnode){
+  return vnode.__v_isVnode
+}
 // h(‘div',{style:{color:red}},'children'); //  h方法和createApp类似
 export const createVNode = (type, props, children = null) => {
   // 可以 根据 type 来区分是组件还是 普通组件
