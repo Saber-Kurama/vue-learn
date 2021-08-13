@@ -462,6 +462,11 @@ function normalizeChildren(vnode, children) {
     vnode.shapeFlag |= type;
 }
 const Text = Symbol('Text');
+function normalizeVNode(child) {
+    if (isObject(child))
+        return child;
+    return createVNode(Text, null, String(child));
+}
 
 // import { createVNode } from "./vnode"
 function createAppAPI(render) {
@@ -625,6 +630,15 @@ function createRenderer(rendererOptions) {
             mountComponent(n2, container);
         }
     };
+    // ------------------组件 ------------------
+    //----------------- 处理元素-----------------
+    // 处理元素
+    const mountChildren = (children, container) => {
+        for (let i = 0; i < children.length; i++) {
+            let child = normalizeVNode(children[i]);
+            patch(null, child, container);
+        }
+    };
     const mountElement = (vnode, container) => {
         // 递归渲染
         const { props, shapeFlag, type, children } = vnode;
@@ -639,6 +653,9 @@ function createRenderer(rendererOptions) {
         console.log(shapeFlag & 8 /* TEXT_CHILDREN */);
         if (shapeFlag & 8 /* TEXT_CHILDREN */) {
             hostSetElementText(el, children); // 文本比较简单 直接扔进去即可
+        }
+        else if (shapeFlag & 16 /* ARRAY_CHILDREN */) {
+            mountChildren(children, el);
         }
         hostInsert(el, container);
     };

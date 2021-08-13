@@ -85,7 +85,7 @@ export function createRenderer(rendererOptions) {
     if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
         hostSetElementText(el, children);// 文本比较简单 直接扔进去即可
     } else if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
-        // mountChildren(children, el);
+        mountChildren(children, el);
     }
     hostInsert(el, container);
   };
