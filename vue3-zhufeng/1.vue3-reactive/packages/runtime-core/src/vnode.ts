@@ -39,3 +39,8 @@ function normalizeChildren(vnode,children){
 }
 
 export const Text = Symbol('Text')
+export function normalizeVNode(child){
+  if(isObject(child)) return child;
+
+  return createVNode(Text,null,String(child));
+}
