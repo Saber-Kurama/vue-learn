@@ -4,6 +4,7 @@ var VueRuntimeDOM = (function (exports) {
   const isObject = (value) => typeof value == 'object' && value !== null;
   const extend = Object.assign;
   const isArray = Array.isArray;
+  const isFunction = (value) => typeof value == 'function';
   const isString = (value) => typeof value === 'string';
 
   const nodeOps = {
@@ -166,8 +167,102 @@ var VueRuntimeDOM = (function (exports) {
       };
   }
 
+  function createComponentInstance(vnode) {
+      // webcomponent 组件需要有“属性” “插槽”
+      const instance = {
+          vnode,
+          type: vnode.type,
+          props: {},
+          attrs: {},
+          slots: {},
+          ctx: {},
+          data: {},
+          setupState: {},
+          render: null,
+          subTree: null,
+          isMounted: false // 表示这个组件是否挂载过
+      };
+      instance.ctx = { _: instance }; // instance.ctx._
+      return instance;
+  }
+  function setupComponent(instance) {
+      const { props, children } = instance.vnode; // {type,props,children}
+      // 根据props 解析出 props 和 attrs，将其放到instance上
+      instance.props = props; // initProps()
+      instance.children = children; // 插槽的解析 initSlot()
+      // 需要先看下 当前组件是不是有状态的组件， 函数组件
+      let isStateful = instance.vnode.shapeFlag & 4 /* STATEFUL_COMPONENT */;
+      if (isStateful) { // 表示现在是一个带状态的组件
+          // 调用 当前实例的setup方法，用setup的返回值 填充 setupState和对应的render方法
+          setupStatefulComponent(instance);
+      }
+  }
+  function setupStatefulComponent(instance) {
+      // 1.代理 传递给render函数的参数
+      // instance.proxy = new Proxy(instance.ctx, PublicInstanceProxyHandlers as any)
+      // 2.获取组件的类型 拿到组件的setup方法
+      let Component = instance.type;
+      let { setup } = Component;
+      // ------ 没有setup------
+      if (setup) {
+          let setupContext = createSetupContext(instance);
+          const setupResult = setup(instance.props, setupContext); // instance 中props attrs slots emit expose 会被提取出来，因为在开发过程中会使用这些属性
+          handleSetupResult(instance, setupResult);
+      }
+      else {
+          finishComponentSetup(instance); // 完成组件的启动
+      }
+  }
+  function handleSetupResult(instance, setupResult) {
+      if (isFunction(setupResult)) {
+          instance.render = setupResult;
+      }
+      else if (isObject(setupResult)) {
+          instance.setupState = setupResult;
+      }
+      finishComponentSetup(instance);
+  }
+  function finishComponentSetup(instance) {
+      let Component = instance.type;
+      if (!instance.render) {
+          // 对template模板进行编译 产生render函数
+          // instance.render = render;// 需要将生成render函数放在实例上
+          if (!Component.render && Component.template) ;
+          instance.render = Component.render;
+      }
+      // 对vue2.0API做了兼容处理
+      // applyOptions 
+  }
+  function createSetupContext(instance) {
+      return {
+          attrs: instance.attrs,
+          slots: instance.slots,
+          emit: () => { },
+          expose: () => { }
+      };
+  }
+
   function createRenderer(rendererOptions) {
       const { insert: hostInsert, remove: hostRemove, patchProp: hostPatchProp, createElement: hostCreateElement, createText: hostCreateText, createComment: hostCreateComment, setText: hostSetText, setElementText: hostSetElementText, } = rendererOptions;
+      // -------------------组件----------------------
+      const setupRenderEfect = (instance, container) => {
+          console.log('instance', instance);
+          instance.render();
+      };
+      const mountComponent = (initialVNode, container) => {
+          // 组件的渲染流程  最核心的就是调用 setup拿到返回值，获取render函数返回的结果来进行渲染 
+          // 1.先有实例
+          const instance = (initialVNode.component = createComponentInstance(initialVNode));
+          // 2.需要的数据解析到实例上
+          setupComponent(instance); // state props attrs render ....
+          // 3.创建一个effect 让render函数执行
+          setupRenderEfect(instance);
+      };
+      const processComponent = (n1, n2, container) => {
+          if (n1 == null) { // 组件没有上一次的虚拟节点
+              mountComponent(n2);
+          }
+      };
       // 处理元素
       const mountElement = (vnode, container) => {
           // 递归渲染
@@ -203,6 +298,9 @@ var VueRuntimeDOM = (function (exports) {
               default:
                   if (shapeFlag & 1 /* ELEMENT */) {
                       processElement(n1, n2, container);
+                  }
+                  else if (shapeFlag & 4 /* STATEFUL_COMPONENT */) {
+                      processComponent(n1, n2);
                   }
           }
       };

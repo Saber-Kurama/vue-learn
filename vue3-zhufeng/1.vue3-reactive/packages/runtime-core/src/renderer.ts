@@ -1,5 +1,6 @@
 import { ShapeFlags } from "@vue/shared";
 import { createAppAPI } from "./apiCreateApp";
+import { createComponentInstance, setupComponent } from "./component";
 import { Text } from "./vnode";
 
 export function createRenderer(rendererOptions) {
@@ -14,15 +15,19 @@ export function createRenderer(rendererOptions) {
     setText: hostSetText,
     setElementText: hostSetElementText,
 } = rendererOptions
-
+  // -------------------组件----------------------
+  const setupRenderEfect = (instance, container) => {
+    console.log('instance', instance)
+    instance.render()
+  }  
   const mountComponent = (initialVNode, container) => {
     // 组件的渲染流程  最核心的就是调用 setup拿到返回值，获取render函数返回的结果来进行渲染 
     // 1.先有实例
-    // const instance = (initialVNode.component = createComponentInstance(initialVNode))
+    const instance = (initialVNode.component = createComponentInstance(initialVNode))
     // 2.需要的数据解析到实例上
-    // setupComponent(instance); // state props attrs render ....
+    setupComponent(instance); // state props attrs render ....
     // 3.创建一个effect 让render函数执行
-    // setupRenderEfect(instance, container);
+    setupRenderEfect(instance, container);
 }
 
   const processComponent = (n1, n2, container) => {
@@ -72,7 +77,7 @@ const processElement = (n1, n2, container) => {
         if (shapeFlag & ShapeFlags.ELEMENT) {
           processElement(n1, n2, container);
         } else if (shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
-          // processComponent(n1, n2, container);
+          processComponent(n1, n2, container);
         }
     }
   };

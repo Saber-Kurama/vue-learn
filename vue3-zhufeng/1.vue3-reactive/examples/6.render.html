@@ -17,29 +17,38 @@
         console.log('createVNode', createVNode)
         const vnode = createVNode('p', {}, 'foo')
         console.log(vnode)
-        let App = { // getCurrentInstance = > instance
-            setup(props, context) { // instance 里面包含的内容 会提取一些传递给context
-                let state = reactive({name:'zf'});
-                let fn = function(){
-                    state.name = 'jw';
-                    state.name = 'zf';
-                    state.name = 'jw';
-                    state.name = 'zf';
-                }
-                return () => {
-                    // h('div',{a:1});
-                    // h('div',{},'helloworld');
-                    // h('div',{},h('span'));
-                    // h('div',h('span'));
-                    // h('div',[h('span'),h('span')]);
-                    // h('div',null,h('span'),h('span'));
-                    // h('div',null,'a','b','c');
-                    return h('div',{onClick:fn},state.name);
-                }
+        // let App = { // getCurrentInstance = > instance
+        //     setup(props, context) { // instance 里面包含的内容 会提取一些传递给context
+        //         let state = reactive({name:'zf'});
+        //         let fn = function(){
+        //             state.name = 'jw';
+        //             state.name = 'zf';
+        //             state.name = 'jw';
+        //             state.name = 'zf';
+        //         }
+        //         return () => {
+        //             // h('div',{a:1});
+        //             // h('div',{},'helloworld');
+        //             // h('div',{},h('span'));
+        //             // h('div',h('span'));
+        //             // h('div',[h('span'),h('span')]);
+        //             // h('div',null,h('span'),h('span'));
+        //             // h('div',null,'a','b','c');
+        //             return h('div',{onClick:fn},state.name);
+        //         }
+        //     },
+        // }
+        let App = {
+            setup(props, context) {
+                console.log('props', props, context)
+                return {}
             },
+            render() {
+                console.log('render---')
+            }
         }
-        // let app = createApp(App, { name: 'zf', age: 12 })
-        let app = createApp('div', {style: {color: 'red'}}, 'saber')
+        let app = createApp(App, { name: 'zf', age: 12 })
+        // let app = createApp('div', {style: {color: 'red'}}, 'saber')
         app.mount('#app')
     </script>
 
