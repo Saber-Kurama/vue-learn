@@ -698,9 +698,39 @@ function createRenderer(rendererOptions) {
         }
         hostInsert(el, container);
     };
+    const patchProps = (oldProps, newProps, el) => {
+        if (oldProps !== newProps) {
+            for (let key in newProps) {
+                const prev = oldProps[key];
+                const next = newProps[key];
+                if (prev !== next) {
+                    hostPatchProp(el, key, prev, next);
+                }
+            }
+            for (const key in oldProps) {
+                if (!(key in newProps)) {
+                    hostPatchProp(el, key, oldProps[key], null);
+                }
+            }
+        }
+    };
+    // 元素更新
+    const patchElement = (n1, n2, container) => {
+        // 元素相同
+        let el = (n2.el = n1.el);
+        // 更新属性
+        const oldProps = n1.props || {};
+        const newProps = n2.props || {};
+        patchProps(oldProps, newProps, el);
+    };
     const processElement = (n1, n2, container) => {
         if (n1 == null) {
             mountElement(n2, container);
+        }
+        else {
+            // 元素更新
+            console.log('元素更新');
+            patchElement(n1, n2);
         }
     };
     //----------------- 处理元素-----------------
@@ -726,6 +756,7 @@ function createRenderer(rendererOptions) {
             unmount(n1);
             n1 = null; // 重新渲染n2 对应的内容
         }
+        console.log('patch----');
         switch (type) {
             case Text:
                 // 操作text
