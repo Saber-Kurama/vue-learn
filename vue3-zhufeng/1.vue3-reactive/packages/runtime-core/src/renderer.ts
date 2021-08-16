@@ -15,32 +15,40 @@ export function createRenderer(rendererOptions) {
     createComment: hostCreateComment,
     setText: hostSetText,
     setElementText: hostSetElementText,
+    nextSibling: hostNextSibling,
   } = rendererOptions;
   // -------------------组件----------------------
   const setupRenderEfect = (instance, container) => {
     console.log("instance", instance);
-    effect(function componentEffect() {
-      if (!instance.isMounted) {
-        // 初次渲染
-        let proxyToUse = instance.proxy;
-        let subTree = (instance.subTree = instance.render.call(
-          proxyToUse,
-          proxyToUse
-        ));
+    effect(
+      function componentEffect() {
+        if (!instance.isMounted) {
+          // 初次渲染
+          let proxyToUse = instance.proxy;
+          let subTree = (instance.subTree = instance.render.call(
+            proxyToUse,
+            proxyToUse
+          ));
 
-        // 用render函数的返回值 继续渲染
-        patch(null, subTree, container);
-        instance.isMounted = true;
-      } else {
-        // diff算法  （核心 diff + 序列优化 watchApi 生命周期）
-        // ts 一周
-        // 组件库
-        // 更新逻辑
-        console.log('开始更新---')
+          // 用render函数的返回值 继续渲染
+          patch(null, subTree, container);
+          instance.isMounted = true;
+        } else {
+          // diff算法  （核心 diff + 序列优化 watchApi 生命周期）
+          // ts 一周
+          // 组件库
+          // 更新逻辑
+          console.log("开始更新---");
+          const prevTree = instance.subTree;
+          const proxyToUse = instance.proxy;
+          const nextTree = instance.render.call(proxyToUse, proxyToUse);
+          patch(prevTree, nextTree, container);
+        }
+      },
+      {
+        scheduler: queueJob,
       }
-    }, {
-      scheduler: queueJob
-    });
+    );
   };
   const mountComponent = (initialVNode, container) => {
     // 组件的渲染流程  最核心的就是调用 setup拿到返回值，获取render函数返回的结果来进行渲染
@@ -69,11 +77,10 @@ export function createRenderer(rendererOptions) {
   // 处理元素
   const mountChildren = (children, container) => {
     for (let i = 0; i < children.length; i++) {
-
-        let child = normalizeVNode(children[i]);
-        patch(null, child, container);
+      let child = normalizeVNode(children[i]);
+      patch(null, child, container);
     }
-}
+  };
   const mountElement = (vnode, container) => {
     // 递归渲染
     const { props, shapeFlag, type, children } = vnode;
@@ -84,13 +91,10 @@ export function createRenderer(rendererOptions) {
         hostPatchProp(el, key, null, props[key]);
       }
     }
-    console.log("ShapeFlags.TEXT_CHILDREN", ShapeFlags.TEXT_CHILDREN);
-    console.log("shapeFlag", shapeFlag);
-    console.log(shapeFlag & ShapeFlags.TEXT_CHILDREN);
     if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
-        hostSetElementText(el, children);// 文本比较简单 直接扔进去即可
+      hostSetElementText(el, children); // 文本比较简单 直接扔进去即可
     } else if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
-        mountChildren(children, el);
+      mountChildren(children, el);
     }
     hostInsert(el, container);
   };
@@ -110,10 +114,24 @@ export function createRenderer(rendererOptions) {
       hostInsert((n2.el = hostCreateText(n2.children)), container);
     }
   };
+  // -----------------文本处理-----------------
 
-  const patch = (n1, n2, container) => {
+  const isSameVNodeType = (n1, n2) => {
+    return n1.type === n2.type && n1.key === n2.key;
+  };
+  const unmount = (n1) => {
+    // 如果是组件 调用的组件的生命周期等
+    hostRemove(n1.el);
+  };
+  const patch = (n1, n2, container, anchor = null) => {
     const { shapeFlag, type } = n2;
-    console.log("n2", n2);
+
+    if (n1 && !isSameVNodeType(n1, n2)) {
+      // 把以前的删掉 换成n2
+      anchor = hostNextSibling(n1.el);
+      unmount(n1);
+      n1 = null; // 重新渲染n2 对应的内容
+    }
     switch (type) {
       case Text:
         // 操作text

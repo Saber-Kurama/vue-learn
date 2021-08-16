@@ -22,7 +22,8 @@ const nodeOps = {
     querySelector: selector => document.querySelector(selector),
     setElementText: (el, text) => el.textContent = text,
     createText: text => document.createTextNode(text),
-    setText: (node, text) => node.nodeValue = text
+    setText: (node, text) => node.nodeValue = text,
+    nextSibling: (node) => node.nextSibling
 };
 
 const patchAttr = (el, key, value) => {
@@ -627,7 +628,7 @@ function flushJobs() {
 }
 
 function createRenderer(rendererOptions) {
-    const { insert: hostInsert, remove: hostRemove, patchProp: hostPatchProp, createElement: hostCreateElement, createText: hostCreateText, createComment: hostCreateComment, setText: hostSetText, setElementText: hostSetElementText, } = rendererOptions;
+    const { insert: hostInsert, remove: hostRemove, patchProp: hostPatchProp, createElement: hostCreateElement, createText: hostCreateText, createComment: hostCreateComment, setText: hostSetText, setElementText: hostSetElementText, nextSibling: hostNextSibling, } = rendererOptions;
     // -------------------组件----------------------
     const setupRenderEfect = (instance, container) => {
         console.log("instance", instance);
@@ -645,10 +646,14 @@ function createRenderer(rendererOptions) {
                 // ts 一周
                 // 组件库
                 // 更新逻辑
-                console.log('开始更新---');
+                console.log("开始更新---");
+                const prevTree = instance.subTree;
+                const proxyToUse = instance.proxy;
+                const nextTree = instance.render.call(proxyToUse, proxyToUse);
+                patch(prevTree, nextTree, container);
             }
         }, {
-            scheduler: queueJob
+            scheduler: queueJob,
         });
     };
     const mountComponent = (initialVNode, container) => {
@@ -685,9 +690,6 @@ function createRenderer(rendererOptions) {
                 hostPatchProp(el, key, null, props[key]);
             }
         }
-        console.log("ShapeFlags.TEXT_CHILDREN", 8 /* TEXT_CHILDREN */);
-        console.log("shapeFlag", shapeFlag);
-        console.log(shapeFlag & 8 /* TEXT_CHILDREN */);
         if (shapeFlag & 8 /* TEXT_CHILDREN */) {
             hostSetElementText(el, children); // 文本比较简单 直接扔进去即可
         }
@@ -708,9 +710,22 @@ function createRenderer(rendererOptions) {
             hostInsert((n2.el = hostCreateText(n2.children)), container);
         }
     };
-    const patch = (n1, n2, container) => {
+    // -----------------文本处理-----------------
+    const isSameVNodeType = (n1, n2) => {
+        return n1.type === n2.type && n1.key === n2.key;
+    };
+    const unmount = (n1) => {
+        // 如果是组件 调用的组件的生命周期等
+        hostRemove(n1.el);
+    };
+    const patch = (n1, n2, container, anchor = null) => {
         const { shapeFlag, type } = n2;
-        console.log("n2", n2);
+        if (n1 && !isSameVNodeType(n1, n2)) {
+            // 把以前的删掉 换成n2
+            anchor = hostNextSibling(n1.el);
+            unmount(n1);
+            n1 = null; // 重新渲染n2 对应的内容
+        }
         switch (type) {
             case Text:
                 // 操作text

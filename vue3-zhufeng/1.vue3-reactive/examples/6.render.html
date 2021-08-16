@@ -47,7 +47,10 @@
               state.name = 'saber'
           }
           return () => {
-            console.log("render------");
+            // console.log("render------");
+            if(state.name === 'saber'){
+                return h("span", { a: "1", onClick: fn }, state.name);
+            }
             return h("div", { a: "1", onClick: fn }, state.name);
           };
         },
