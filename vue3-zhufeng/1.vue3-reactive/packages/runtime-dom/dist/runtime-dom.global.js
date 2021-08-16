@@ -105,6 +105,7 @@ var VueRuntimeDOM = (function (exports) {
           default:
               // 如果不是事件 才是属性
               if (/^on[^a-z]/.test(key)) {
+                  console.log('??>>>>>>>');
                   patchEvent(el, key, nextValue); // 事件就是添加和删除 修改
               }
               else {
@@ -602,6 +603,32 @@ var VueRuntimeDOM = (function (exports) {
       };
   }
 
+  let queue = [];
+  function queueJob(job) {
+      console.log('job--', job);
+      if (!queue.includes(job)) {
+          queue.push(job);
+          queueFlush();
+      }
+  }
+  let isFlushPending = false;
+  function queueFlush() {
+      if (!isFlushPending) {
+          isFlushPending = true;
+          Promise.resolve().then(flushJobs);
+      }
+  }
+  function flushJobs() {
+      isFlushPending = false;
+      // 清空时  我们需要根据调用的顺序依次刷新  , 保证先刷新父在刷新子
+      queue.sort((a, b) => a.id - b.id);
+      for (let i = 0; i < queue.length; i++) {
+          const job = queue[i];
+          job();
+      }
+      queue.length = 0;
+  }
+
   function createRenderer(rendererOptions) {
       const { insert: hostInsert, remove: hostRemove, patchProp: hostPatchProp, createElement: hostCreateElement, createText: hostCreateText, createComment: hostCreateComment, setText: hostSetText, setElementText: hostSetElementText, } = rendererOptions;
       // -------------------组件----------------------
@@ -614,7 +641,17 @@ var VueRuntimeDOM = (function (exports) {
                   let subTree = (instance.subTree = instance.render.call(proxyToUse, proxyToUse));
                   // 用render函数的返回值 继续渲染
                   patch(null, subTree, container);
+                  instance.isMounted = true;
               }
+              else {
+                  // diff算法  （核心 diff + 序列优化 watchApi 生命周期）
+                  // ts 一周
+                  // 组件库
+                  // 更新逻辑
+                  console.log('开始更新---');
+              }
+          }, {
+              scheduler: queueJob
           });
       };
       const mountComponent = (initialVNode, container) => {

@@ -2,6 +2,7 @@ import { effect } from "@vue/reactivity";
 import { ShapeFlags } from "@vue/shared";
 import { createAppAPI } from "./apiCreateApp";
 import { createComponentInstance, setupComponent } from "./component";
+import { queueJob } from "./scheduler";
 import { normalizeVNode, Text } from "./vnode";
 
 export function createRenderer(rendererOptions) {
@@ -29,12 +30,16 @@ export function createRenderer(rendererOptions) {
 
         // 用render函数的返回值 继续渲染
         patch(null, subTree, container);
+        instance.isMounted = true;
       } else {
         // diff算法  （核心 diff + 序列优化 watchApi 生命周期）
         // ts 一周
         // 组件库
         // 更新逻辑
+        console.log('开始更新---')
       }
+    }, {
+      scheduler: queueJob
     });
   };
   const mountComponent = (initialVNode, container) => {
