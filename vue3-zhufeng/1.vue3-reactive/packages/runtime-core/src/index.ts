@@ -1,4 +1,13 @@
+// import { createVNode } from "./vnode"
+
 export {
   createRenderer
 } from './renderer'
-export default {}
+
+export {
+  h
+} from './h'
+
+export { createVNode } from './vnode'
+
+export * from '@vue/reactivity'

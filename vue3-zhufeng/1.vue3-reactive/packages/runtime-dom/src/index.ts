@@ -14,15 +14,16 @@ const rendererOptions = extend({ patchProp }, nodeOps)
 // vue中runtime-core 提供了核心的方法 用来处理渲染的，他会使用runtime-dom中的api进行渲染
 export function createApp(rootComponent, rootProps = null) {
   const app: any = createRenderer(rendererOptions).createApp(rootComponent,rootProps)
-  // let {mount} = app
+  let {mount} = app
   app.mount = function (container) {
       // // 清空容器的操作 
-      // container = nodeOps.querySelector(container);
-      // container.innerHTML = '';
-      // mount(container); // 函数劫持
-      // // 将组件 渲染成dom元素 进行挂载
+      container = nodeOps.querySelector(container);
+      container.innerHTML = '';
+      mount(container); // 函数劫持
+      
   }
   return app;
 }
 
+export * from '@vue/runtime-core';
 export default {}

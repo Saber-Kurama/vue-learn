@@ -15,6 +15,7 @@ export const patchProp = (el, key, preValue, nextValue) => {
     default:
       // 如果不是事件 才是属性
       if (/^on[^a-z]/.test(key)) {
+        console.log('??>>>>>>>')
         patchEvent(el, key, nextValue); // 事件就是添加和删除 修改
       } else {
         patchAttr(el, key, nextValue);
