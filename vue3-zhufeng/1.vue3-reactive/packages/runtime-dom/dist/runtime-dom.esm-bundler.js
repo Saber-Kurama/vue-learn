@@ -714,6 +714,152 @@ function createRenderer(rendererOptions) {
             }
         }
     };
+    const patchKeyedChildren = (c1, c2, el) => {
+        // 尽量减少 比较的范围
+        // sync from start 从头开始一个个比 遇到不同的就停止了
+        let i = 0;
+        const l2 = c2.length;
+        let e1 = c1.length - 1; // prev ending index
+        let e2 = l2 - 1; // next ending index;
+        while (i <= e1 && i <= e2) {
+            const n1 = c1[i];
+            const n2 = c2[i];
+            if (isSameVNodeType(n1, n2)) {
+                patch(n1, n2, el);
+            }
+            else {
+                break;
+            }
+            i++;
+        }
+        while (i < e1 && i < e2) {
+            const n1 = c1[e1];
+            const n2 = c1[e2];
+            if (isSameVNodeType(n1, n2)) {
+                patch(n1, n2, el);
+            }
+            else {
+                break;
+            }
+            e1--;
+            e2--;
+        }
+        // 旧数组是 [i, e1]， 新数组是[i, e2]
+        if (i > e1) {
+            // 老数组少
+            if (i <= e2) {
+                // 代表新的多
+                const nextPos = e2 + 1;
+                // 有没有这个节点
+                const anchor = nextPos < l2 ? c2[nextPos].el : null;
+                while (i <= e2) {
+                    patch(null, c2[i], el, anchor); // 只是向后追加
+                    i++;
+                }
+            }
+        }
+        else if (i > e2) {
+            // 新的少，老的多
+            while (i <= e1) {
+                // 卸载
+                unmount(c1[i]);
+                i++;
+            }
+        }
+        else {
+            //
+            //  console.log('更新孩子节点')
+            //  hostInsert(child.el,el,anchor)
+            let s1 = i;
+            let s2 = i;
+            const keyToNewIndexMap = new Map(); // 索引 ： 值 weakMap :key 对象
+            for (let i = s2; i <= e2; i++) {
+                const childVNode = c2[i]; // child
+                keyToNewIndexMap.set(childVNode.key, i);
+            }
+            console.log("keyToNewIndexMap", keyToNewIndexMap);
+            const toBePatched = e2 - s2 + 1;
+            const newIndexToOldIndexMap = new Array(toBePatched).fill(0);
+            // 去老的里面查找 看用没有复用的
+            for (let i = s1; i <= e1; i++) {
+                const oldVnode = c1[i];
+                let newIndex = keyToNewIndexMap.get(oldVnode.key);
+                if (newIndex === undefined) {
+                    // 老的里的不在新的中
+                    unmount(oldVnode);
+                }
+                else {
+                    // 新的和旧的关系 索引的关系
+                    newIndexToOldIndexMap[newIndex - s2] = i + 1;
+                    patch(oldVnode, c2[newIndex], el);
+                }
+            }
+            // for (let i = toBePatched - 1; i >= 0; i--) {
+            //   let currentIndex = i + s2; // 找到h的索引
+            //   let child = c2[currentIndex]; // 找到h对应的节点
+            //   console.log('child')
+            //   let anchor =
+            //     currentIndex + 1 < c2.length ? c2[currentIndex + 1].el : null; // 第一次插入h 后 h是一个虚拟节点，同时插入后 虚拟节点会
+            //   if (newIndexToOldIndexMap[i] == 0) {
+            //     // 如果自己是0说明没有被patch过
+            //     patch(null, child, el, anchor);
+            //   } else {
+            //     // hostInsert(child.el,el,anchor);
+            //   }
+            // }
+        }
+    };
+    const unmountChildren = (children) => {
+        for (let i = 0; i < children.length; i++) {
+            unmount(children[i]);
+        }
+    };
+    const patchChildren = (n1, n2, el) => {
+        const c1 = n1.children;
+        const c2 = n2.children;
+        // 情况
+        // 1. 老有儿子，新没有儿子
+        // 2. 老没有儿子，新有儿子
+        // 3. 老有儿子， 新有儿子
+        // 4. 老有儿子（文本）， 新有儿子（文本）
+        const prevShapeFlag = n1.shapeFlag;
+        const shapeFlag = n2.shapeFlag;
+        if (shapeFlag & 8 /* TEXT_CHILDREN */) {
+            // 新的儿子 是文本
+            // 老的是数组
+            if (prevShapeFlag & 16 /* ARRAY_CHILDREN */) {
+                unmountChildren(c1); // 销毁 老 的孩子
+            }
+            if (c2 !== c1) {
+                // 两个都是文本
+                hostSetElementText(el, c2);
+            }
+        }
+        else {
+            // 新的数组 或者 不存在
+            if (prevShapeFlag & 16 /* ARRAY_CHILDREN */) {
+                if (shapeFlag & 16 /* ARRAY_CHILDREN */) {
+                    // 新老都是数组 ---> diff
+                    patchKeyedChildren(c1, c2, el);
+                }
+                else {
+                    //  新的是空的
+                    unmountChildren(c1);
+                }
+            }
+            else {
+                // 老的是文本
+                if (prevShapeFlag & 8 /* TEXT_CHILDREN */) {
+                    // 新的如果是 null 的话 也会这样修改
+                    hostSetElementText(el, "");
+                }
+                if (shapeFlag & 8 /* TEXT_CHILDREN */) {
+                    // 老的是文本或者空， 新的数组
+                    mountChildren(c2, el);
+                }
+            }
+        }
+    };
     // 元素更新
     const patchElement = (n1, n2, container) => {
         // 元素相同
@@ -722,6 +868,8 @@ function createRenderer(rendererOptions) {
         const oldProps = n1.props || {};
         const newProps = n2.props || {};
         patchProps(oldProps, newProps, el);
+        // 更新孩子节点 开始 diff 算法
+        patchChildren(n1, n2, el);
     };
     const processElement = (n1, n2, container) => {
         if (n1 == null) {
@@ -729,7 +877,7 @@ function createRenderer(rendererOptions) {
         }
         else {
             // 元素更新
-            console.log('元素更新');
+            console.log("元素更新");
             patchElement(n1, n2);
         }
     };
@@ -756,7 +904,7 @@ function createRenderer(rendererOptions) {
             unmount(n1);
             n1 = null; // 重新渲染n2 对应的内容
         }
-        console.log('patch----');
+        console.log("patch----");
         switch (type) {
             case Text:
                 // 操作text

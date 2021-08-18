@@ -89,9 +89,19 @@ const getSequence = (arr) => {
   };
 }
 
+// arr: [1, 3, 2]
+// p: [1, 3, 2]
+// res [0]
+
+// res: [0, 1]
+// p: [1, 0, 2]
+
+// p: [1, 0, 0]
+// res: [0, 2]
+
 function getSequence1(arr) {
   const p = arr.slice()
-  const result = [0]
+  const result = [0]; //存放的是下标
   let i, j, u, v, c
   const len = arr.length
   // 遍历数组
@@ -110,6 +120,7 @@ function getSequence1(arr) {
       u = 0
       v = result.length - 1
       // 当前数值小于result子序列最后一项时，使用二分法找到第一个大于当前数值的下标
+      // 二分查找
       while (u < v) {
         c = ((u + v) / 2) | 0
         if (arr[result[c]] < arrI) {

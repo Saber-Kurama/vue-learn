@@ -122,7 +122,7 @@ export function createRenderer(rendererOptions) {
     const l2 = c2.length;
     let e1 = c1.length - 1; // prev ending index
     let e2 = l2 - 1; // next ending index;
-    while (i <= el && i <= e2) {
+    while (i <= e1 && i <= e2) {
       const n1 = c1[i];
       const n2 = c2[i];
       if (isSameVNodeType(n1, n2)) {
@@ -132,7 +132,7 @@ export function createRenderer(rendererOptions) {
       }
       i++;
     }
-
+    
     while (i < e1 && i < e2) {
       const n1 = c1[e1];
       const n2 = c1[e2];
@@ -141,10 +141,10 @@ export function createRenderer(rendererOptions) {
       } else {
         break;
       }
-      el--;
+      e1--;
       e2--;
     }
-
+    
     // 旧数组是 [i, e1]， 新数组是[i, e2]
     if (i > e1) {
       // 老数组少
@@ -158,13 +158,56 @@ export function createRenderer(rendererOptions) {
           i++;
         }
       }
-    }else if(i > e2) { // 新的少，老的多
-      while (i <= e1) { // 卸载
-        unmount(c1[i])
-        i++
+    } else if (i > e2) {
+      // 新的少，老的多
+      while (i <= e1) {
+        // 卸载
+        unmount(c1[i]);
+        i++;
       }
-    }else {
-      
+    } else {
+      //
+      //  console.log('更新孩子节点')
+      //  hostInsert(child.el,el,anchor)
+      let s1 = i;
+      let s2 = i;
+      const keyToNewIndexMap = new Map(); // 索引 ： 值 weakMap :key 对象
+
+      for (let i = s2; i <= e2; i++) {
+        const childVNode = c2[i]; // child
+        keyToNewIndexMap.set(childVNode.key, i);
+      }
+      console.log("keyToNewIndexMap", keyToNewIndexMap);
+      const toBePatched = e2 - s2 + 1;
+      const newIndexToOldIndexMap = new Array(toBePatched).fill(0);
+
+      // 去老的里面查找 看用没有复用的
+      for (let i = s1; i <= e1; i++) {
+        const oldVnode = c1[i];
+        let newIndex = keyToNewIndexMap.get(oldVnode.key);
+        if (newIndex === undefined) {
+          // 老的里的不在新的中
+          unmount(oldVnode);
+        } else {
+          // 新的和旧的关系 索引的关系
+          newIndexToOldIndexMap[newIndex - s2] = i + 1;
+          patch(oldVnode, c2[newIndex], el);
+        }
+      }
+
+      // for (let i = toBePatched - 1; i >= 0; i--) {
+      //   let currentIndex = i + s2; // 找到h的索引
+      //   let child = c2[currentIndex]; // 找到h对应的节点
+      //   console.log('child')
+      //   let anchor =
+      //     currentIndex + 1 < c2.length ? c2[currentIndex + 1].el : null; // 第一次插入h 后 h是一个虚拟节点，同时插入后 虚拟节点会
+      //   if (newIndexToOldIndexMap[i] == 0) {
+      //     // 如果自己是0说明没有被patch过
+      //     patch(null, child, el, anchor);
+      //   } else {
+      //     // hostInsert(child.el,el,anchor);
+      //   }
+      // }
     }
   };
 
@@ -183,10 +226,9 @@ export function createRenderer(rendererOptions) {
     // 3. 老有儿子， 新有儿子
     // 4. 老有儿子（文本）， 新有儿子（文本）
     const prevShapeFlag = n1.shapeFlag;
-    const shapeFlag = n2.shageFlag;
+    const shapeFlag = n2.shapeFlag;
     if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
       // 新的儿子 是文本
-
       // 老的是数组
       if (prevShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
         unmountChildren(c1); // 销毁 老 的孩子
@@ -201,6 +243,7 @@ export function createRenderer(rendererOptions) {
       if (prevShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
         if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
           // 新老都是数组 ---> diff
+          
           patchKeyedChildren(c1, c2, el);
         } else {
           //  新的是空的
