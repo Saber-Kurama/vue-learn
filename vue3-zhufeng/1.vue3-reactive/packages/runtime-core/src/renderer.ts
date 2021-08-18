@@ -73,7 +73,58 @@ export function createRenderer(rendererOptions) {
   // ------------------组件 ------------------
 
   //----------------- 处理元素-----------------
-
+  function getSequence(arr) {
+    // 最终的结果是索引
+    const len = arr.length;
+    const result = [0]; // 索引  递增的序列 用二分查找性能高
+    const p = arr.slice(0); // 里面内容无所谓 和 原本的数组相同 用来存放索引
+    let start;
+    let end;
+    let middle;
+    for (let i = 0; i < len; i++) {
+      // O(n)
+      const arrI = arr[i];
+      if (arrI !== 0) {
+        let resultLastIndex = result[result.length - 1];
+        // 取到索引对应的值
+        if (arr[resultLastIndex] < arrI) {
+          p[i] = resultLastIndex; // 标记当前前一个对应的索引
+          result.push(i);
+          // 当前的值 比上一个人大 ，直接push ，并且让这个人得记录他的前一个
+          continue;
+        }
+        // 二分查找 找到比当前值大的那一个
+        start = 0;
+        end = result.length - 1;
+        while (start < end) {
+          // 重合就说明找到了 对应的值  // O(logn)
+          middle = ((start + end) / 2) | 0; // 找到中间位置的前一个
+          if (arr[result[middle]] < arrI) {
+            start = middle + 1;
+          } else {
+            end = middle;
+          } // 找到结果集中，比当前这一项大的数
+        }
+        // start / end 就是找到的位置
+        if (arrI < arr[result[start]]) {
+          // 如果相同 或者 比当前的还大就不换了
+          if (start > 0) {
+            // 才需要替换
+            p[i] = result[start - 1]; // 要将他替换的前一个记住
+          }
+          result[start] = i;
+        }
+      }
+    }
+    let len1 = result.length; // 总长度
+    let last = result[len1 - 1]; // 找到了最后一项
+    while (len1-- > 0) {
+      // 根据前驱节点一个个向前查找
+      result[len1] = last;
+      last = p[last];
+    }
+    return result;
+  } // O(nlogn) 性能比较好 O(n^2
   // 处理元素
   const mountChildren = (children, container) => {
     for (let i = 0; i < children.length; i++) {
@@ -122,6 +173,7 @@ export function createRenderer(rendererOptions) {
     const l2 = c2.length;
     let e1 = c1.length - 1; // prev ending index
     let e2 = l2 - 1; // next ending index;
+    console.log(e2);
     while (i <= e1 && i <= e2) {
       const n1 = c1[i];
       const n2 = c2[i];
@@ -132,10 +184,10 @@ export function createRenderer(rendererOptions) {
       }
       i++;
     }
-    
-    while (i < e1 && i < e2) {
+
+    while (i <= e1 && i <= e2) {
       const n1 = c1[e1];
-      const n2 = c1[e2];
+      const n2 = c2[e2];
       if (isSameVNodeType(n1, n2)) {
         patch(n1, n2, el);
       } else {
@@ -144,7 +196,6 @@ export function createRenderer(rendererOptions) {
       e1--;
       e2--;
     }
-    
     // 旧数组是 [i, e1]， 新数组是[i, e2]
     if (i > e1) {
       // 老数组少
@@ -172,12 +223,11 @@ export function createRenderer(rendererOptions) {
       let s1 = i;
       let s2 = i;
       const keyToNewIndexMap = new Map(); // 索引 ： 值 weakMap :key 对象
-
+      console.log(s2, e2);
       for (let i = s2; i <= e2; i++) {
         const childVNode = c2[i]; // child
         keyToNewIndexMap.set(childVNode.key, i);
       }
-      console.log("keyToNewIndexMap", keyToNewIndexMap);
       const toBePatched = e2 - s2 + 1;
       const newIndexToOldIndexMap = new Array(toBePatched).fill(0);
 
@@ -194,20 +244,31 @@ export function createRenderer(rendererOptions) {
           patch(oldVnode, c2[newIndex], el);
         }
       }
-
-      // for (let i = toBePatched - 1; i >= 0; i--) {
-      //   let currentIndex = i + s2; // 找到h的索引
-      //   let child = c2[currentIndex]; // 找到h对应的节点
-      //   console.log('child')
-      //   let anchor =
-      //     currentIndex + 1 < c2.length ? c2[currentIndex + 1].el : null; // 第一次插入h 后 h是一个虚拟节点，同时插入后 虚拟节点会
-      //   if (newIndexToOldIndexMap[i] == 0) {
-      //     // 如果自己是0说明没有被patch过
-      //     patch(null, child, el, anchor);
-      //   } else {
-      //     // hostInsert(child.el,el,anchor);
-      //   }
-      // }
+      // [5,3,4,0] => [1,2]
+      let increasingNewIndexSequence = getSequence(newIndexToOldIndexMap);
+      let j = increasingNewIndexSequence.length - 1; // 取出最后一个人的索引
+      for (let i = toBePatched - 1; i >= 0; i--) {
+        let currentIndex = i + s2; // 找到h的索引
+        let child = c2[currentIndex]; // 找到h对应的节点
+        let anchor =
+          currentIndex + 1 < c2.length ? c2[currentIndex + 1].el : null; // 第一次插入h 后 h是一个虚拟节点，同时插入后 虚拟节点会
+        if (newIndexToOldIndexMap[i] == 0) {
+          // 如果自己是0说明没有被patch过
+          patch(null, child, el, anchor);
+        } else {
+          // hostInsert(child.el,el,anchor); 全部移动
+          // [1,2,3,4,5,6]
+          // [1,6,2,3,4,5]  // 最长递增子序列
+          // 这种操作 需要将节点全部的移动一遍， 我希望可以尽可能的少移动   [5,3,4,0]
+          // 3 2 1 0
+          // [1,2]    2
+          if (i != increasingNewIndexSequence[j]) {
+            hostInsert(child.el, el, anchor); // 操作当前的d 以d下一个作为参照物插入
+          } else {
+            j--; // 跳过不需要移动的元素， 为了减少移动操作 需要这个最长递增子序列算法
+          }
+        }
+      }
     }
   };
 
@@ -243,7 +304,7 @@ export function createRenderer(rendererOptions) {
       if (prevShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
         if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
           // 新老都是数组 ---> diff
-          
+
           patchKeyedChildren(c1, c2, el);
         } else {
           //  新的是空的
