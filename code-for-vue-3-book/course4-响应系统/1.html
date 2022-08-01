@@ -7,21 +7,35 @@
     const target = {
       text: 'init'
     }
-    const effect = () => {
-      document.body.innerText = target.text
-    }
-    effect();
+    // 存储副作用函数的桶
+    const bucket = new Set();
+   
     // const set = 
     const handler = {
       get: (obj, prop) => {
+        // 存储到桶
+        bucket.add(effect)
         return prop in obj ? obj[prop] : 37;
       },
       set: (obj, prop, value) => {
-        return Reflect.set(obj, prop, value)
+        Reflect.set(obj, prop, value)
+        bucket.forEach(fn => {
+          fn()
+        });
+        return true;
       }
     }
     const p = new Proxy(target, handler)
-    p.text = 'saber'
+    const effect = () => {
+      document.body.innerText = p.text
+    }
+    // 执行触发 get
+    effect();
+    setTimeout( () => {
+      // 触发 set
+      p.text = 'saber'
+    }, 1000)
+    
   </script>
 </body>
 </html>
