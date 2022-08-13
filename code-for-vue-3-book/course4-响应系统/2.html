@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+
+<head>
+  <meta charset="utf-8" />
+</head>
+
+<body>
+  <script>
+    let activeEffect = null;
+    const effect = (fn) => {
+      activeEffect = fn;
+      fn()
+    }
+
+
+    // 设置一个桶 WeekMap
+    const bucket = new WeakMap()
+
+    // 做一些封装处理
+    // 收集 追踪
+    function track(target, key) {
+      if (!activeEffect) return;
+      let depsMap = bucket.get(target)
+      if (!depsMap) {
+        bucket.set(target, (depsMap = new Map()))
+      }
+      let deps = depsMap.get(key)
+      if (!deps) {
+        depsMap.set(key, (deps = new Set()))
+      }
+      deps.add(activeEffect)
+    }
+
+    // 触发
+    function trigger(target, key) {
+      const depsMap = bucket.get(target)
+      if (!depsMap) return;
+      const deps = depsMap.get(key)
+      if (!deps) return;
+      deps.forEach((fn) => { fn() })
+    }
+
+
+    const target = { name: 'saber' }
+
+    const handler = {
+      get: (obj, prop) => {
+        track(obj, prop)
+        return prop in obj ? obj[prop] : 'ceshi'
+      },
+      set: (obj, prop, value) => {
+        Reflect.set(obj, prop, value)
+        trigger(obj, prop)
+      }
+    }
+    const proxyTarget = new Proxy(target, handler)
+
+    effect(() => {
+      console.log('effect---')
+      document.body.innerText = proxyTarget.name
+    })
+    setTimeout(() => {
+      proxyTarget.name = '124'
+    }, 1000)
+    setTimeout(() => {
+      proxyTarget.name = '124asdas'
+      proxyTarget.saber = '124'
+    }, 1000)
+  </script>
+</body>
+
+</html>
