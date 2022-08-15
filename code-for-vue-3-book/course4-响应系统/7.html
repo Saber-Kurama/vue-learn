@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+
+<head>
+  <meta charset="utf-8" />
+</head>
+
+<body>
+  <script>
+    // 计算属性 computer 和 lazy
+    let activeEffect = null;
+    let activeEffectStack = [];
+    const effect = (fn, options = {}) => {
+      const effectFn = () => {
+        cleanUp(effectFn)
+        // 入栈
+        activeEffectStack.push(effectFn)
+        // 指针指向栈顶
+        activeEffect = effectFn;
+        fn()
+        activeEffectStack.pop()
+        // 指针指向栈顶
+        activeEffect = activeEffectStack[activeEffectStack.length - 1];
+      }
+      // 副作用函数
+      effectFn.deps = []
+      effectFn.options = options
+      if (!options.lazy) {
+        effectFn()
+      }
+
+      return effectFn
+    }
+
+
+    // 设置一个桶 WeekMap
+    const bucket = new WeakMap()
+
+    // 做一些封装处理
+    // 收集 追踪
+    function track(target, key) {
+      if (!activeEffect) return;
+      let depsMap = bucket.get(target)
+      if (!depsMap) {
+        bucket.set(target, (depsMap = new Map()))
+      }
+      let deps = depsMap.get(key)
+      if (!deps) {
+        depsMap.set(key, (deps = new Set()))
+      }
+      deps.add(activeEffect)
+      activeEffect.deps.push(deps)
+    }
+
+    // 触发
+    function trigger(target, key) {
+      const depsMap = bucket.get(target)
+      if (!depsMap) return;
+      const deps = depsMap.get(key)
+      if (!deps) return;
+      // 这个会造成无限循环
+      // deps.forEach((fn) => {
+      //   fn()
+      // })
+      const effectsToRun = new Set()
+      deps && deps.forEach((fn) => {
+        if (fn !== activeEffect) {
+          effectsToRun.add(fn);
+        }
+      })
+      effectsToRun.forEach((effectFn) => {
+        console.log('effectFn', effectFn.options);
+        if (effectFn.options.scheduler) {
+          effectFn.options.scheduler(effectFn)
+        } else {
+          effectFn(); // 新增
+        }
+      })
+    }
+
+    // 清除依赖
+    function cleanUp(effectFn) {
+      effectFn.deps.forEach((dep) => {
+        dep.delete(effectFn)
+      })
+      effectFn.deps.length = 0;
+    }
+
+
+    const target = { isOK: true, name: 'saber', foo: 1 }
+
+    const handler = {
+      get: (obj, prop) => {
+        track(obj, prop)
+        return prop in obj ? obj[prop] : 'ceshi'
+      },
+      set: (obj, prop, value) => {
+        Reflect.set(obj, prop, value)
+        trigger(obj, prop)
+      }
+    }
+
+    // 定义一个 任务队列
+    const jobQueue = new Set();
+    // 创建一个异步 promise
+    const p = Promise.resolve();
+
+    // 一个标志 代表是否正在刷新队列
+    let isFlushing = false;
+    function flushJob() {
+      // 判断是否正在刷新
+      if (isFlushing) {
+        return
+      }
+      isFlushing = true;
+      p.then(() => {
+        jobQueue.forEach((fn) => {
+          fn()
+        })
+      }).finally(() => {
+        isFlushing = false;
+      })
+    }
+
+    const proxyTarget = new Proxy(target, handler)
+
+    const ff = effect(() => {
+      console.log('----effect----', proxyTarget.foo)
+    }, {
+      // scheduler(fn) {
+      //   // setTimeout(fn)
+      //   jobQueue.add(fn)
+      //   flushJob()
+      // }
+      lazy: true
+    })
+
+    cons
+    // ff()
+    // proxyTarget.foo++;
+    // proxyTarget.foo++;
+    // console.log('======')
+    // setTimeout(() => {
+    //   proxyTarget.isOK = false
+    // }, 1000)
+    // setTimeout(() => {
+    //   proxyTarget.isOK = true
+    // }, 2000)
+
+  </script>
+</body>
+
+</html>
